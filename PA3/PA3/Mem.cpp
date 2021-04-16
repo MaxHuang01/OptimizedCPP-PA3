@@ -52,18 +52,17 @@ void *Mem::Malloc( const uint32_t _size )
 	
 	void* toReturn = nullptr;
 	Heap* pHeap = this->poHeap;
-	FreeNode* pFree = this->poHeap->pFreeHead;///free 游標
-	if (this->poHeap->pUsedHead == nullptr) {//若是第一個used node, 還沒有used node
+	FreeNode* pFree = this->poHeap->pFreeHead;
+	if (this->poHeap->pUsedHead == nullptr) {
 		
 		while (pFree != nullptr)
 		{
 			if ((unsigned int)_size == (unsigned int)pFree->mBlockSize)//find the fit size
 			{
-				//FreeNode* pFreeHdrStart = pFree;
+				
 				FreeNode* pFreeHdrEnd = pFree + 1;
 				toReturn = pFreeHdrEnd;
-				//UsedNode* pUsed = new(pFreeHdrStart) UsedNode(_size);
-				//用cast的方式把Free轉成Used
+				
 				UsedNode* pUsed = (UsedNode*)pFree;
 				pUsed->mType = Block::Used;
 				
@@ -190,7 +189,7 @@ void Mem::Free( void * const data )
 			pHeap->currFreeMem = (uint16_t)(pHeap->currFreeMem + DataSize);
 		}
 	}
-	else if (pDataHdr->pUsedNext != nullptr && pDataHdr->pUsedPrev == nullptr)//此為第一個且後面有東西
+	else if (pDataHdr->pUsedNext != nullptr && pDataHdr->pUsedPrev == nullptr)
 	{
 		//Trace::out("if 4\n");
 	}
