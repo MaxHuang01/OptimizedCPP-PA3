@@ -30,8 +30,8 @@ void Mem::Initialize()
 	FreeNode* pFreeNode = new(pFreeHdrStart) FreeNode(blockSize);
 
 	//update heap
-	pHeap->pUsedHead = nullptr;//³]©wused head
-	pHeap->pFreeHead = pFreeNode;//³]©wfree head
+	pHeap->pUsedHead = nullptr;
+	pHeap->pFreeHead = pFreeNode;
 	pHeap->pNextFit = pFreeNode;
 
 	pHeap->currFreeMem = pFreeNode->mBlockSize;
@@ -52,23 +52,23 @@ void *Mem::Malloc( const uint32_t _size )
 	
 	void* toReturn = nullptr;
 	Heap* pHeap = this->poHeap;
-	FreeNode* pFree = this->poHeap->pFreeHead;///free ´å¼Ð
-	if (this->poHeap->pUsedHead == nullptr) {//­Y¬O²Ä¤@­Óused node, ÁÙ¨S¦³used node
+	FreeNode* pFree = this->poHeap->pFreeHead;///free æ¸¸æ¨™
+	if (this->poHeap->pUsedHead == nullptr) {//è‹¥æ˜¯ç¬¬ä¸€å€‹used node, é‚„æ²’æœ‰used node
 		
 		while (pFree != nullptr)
 		{
-			if ((unsigned int)_size == (unsigned int)pFree->mBlockSize)//§ä¨ìfitªº¤j¤p
+			if ((unsigned int)_size == (unsigned int)pFree->mBlockSize)//find the fit size
 			{
 				//FreeNode* pFreeHdrStart = pFree;
 				FreeNode* pFreeHdrEnd = pFree + 1;
-				toReturn = pFreeHdrEnd;//¯u¥¿°O¾ÐÅéªºÀY
+				toReturn = pFreeHdrEnd;
 				//UsedNode* pUsed = new(pFreeHdrStart) UsedNode(_size);
-				//¥Îcastªº¤è¦¡§âFreeÂà¦¨Used
+				//ç”¨castçš„æ–¹å¼æŠŠFreeè½‰æˆUsed
 				UsedNode* pUsed = (UsedNode*)pFree;
 				pUsed->mType = Block::Used;
 				
 				this->poHeap->pUsedHead = pUsed;
-				if (pFree->pFreePrev == nullptr && pFree->pFreeNext == nullptr)//­Y¦¹pFree¦b¤@¦ì ¥B «á­±µL¤H
+				if (pFree->pFreePrev == nullptr && pFree->pFreeNext == nullptr)//pFree is the head and the only node
 				{
 					this->poHeap->pFreeHead = nullptr;
 					this->poHeap->pNextFit = nullptr;
@@ -88,7 +88,7 @@ void *Mem::Malloc( const uint32_t _size )
 				}
 				break;
 			}
-			else if ((unsigned int)_size < (unsigned int)pFree->mBlockSize)//§ä¨ì¤jªº»Ý­nsubdivision
+			else if ((unsigned int)_size < (unsigned int)pFree->mBlockSize)//needs to subdivision
 			{
 				//keep the size of original block
 				//uint16_t OrgSize = pFree->mBlockSize;
@@ -114,10 +114,8 @@ void *Mem::Malloc( const uint32_t _size )
 				InsertFree(pHeap->pFreeHead,pNewFree);
 				InsertUsed(pHeap->pUsedHead, pNewUsed);
 
-				//update heap
-				//Trace::out("pHeap->currusedmem:%d _size:%d (uint32_t)(pFreeHdrEnd - pFree):%d\n", pHeap->currFreeMem, _size, (uint32_t)pFreeHdrEnd - (uint32_t)pFree);
+				
 				pHeap->currFreeMem = (uint16_t)((pHeap->currFreeMem - _size) - ((uint32_t)pFreeHdrEnd - (uint32_t)pFree));
-				//pHeap->currNumFreeBlocks--;
 				pHeap->currNumUsedBlocks++;
 				pHeap->currUsedMem = (uint16_t)(pHeap->currUsedMem + (uint16_t)_size);
 				if (pHeap->currNumUsedBlocks > pHeap->peakNumUsed)
@@ -155,28 +153,25 @@ void Mem::Free( void * const data )
 	Heap* pHeap = this->poHeap;
 	FreeNode* pToFree = (FreeNode*)pDataHdr;
 	pToFree->mType = Block::Free;
-	//UsedNode* pUsed = pHeap->pUsedHead;
-	if (pDataHdr->pUsedNext == nullptr && pDataHdr->pUsedPrev != nullptr)//¦¹node¬°³Ì«á¤@­Ó 
+	
+	if (pDataHdr->pUsedNext == nullptr && pDataHdr->pUsedPrev != nullptr)
 	{
 		//Trace::out("if 1\n");
 	}
-	else if (pDataHdr->pUsedNext != nullptr && pDataHdr->pUsedPrev != nullptr)//¦¹node¬°¤¤¶¡ªº
+	else if (pDataHdr->pUsedNext != nullptr && pDataHdr->pUsedPrev != nullptr)
 	{
 		//Trace::out("if 2\n");
 	}
-	else if (pDataHdr->pUsedNext == nullptr && pDataHdr->pUsedPrev == nullptr)//¦¹¬°²Ä¤@­Ó¥B«á­±¨SªF¦è
+	else if (pDataHdr->pUsedNext == nullptr && pDataHdr->pUsedPrev == nullptr)
 	{
-		//Trace::out("if 3\n");
-		/*pDataHdr->pUsedNext = nullptr;
-		pDataHdr->pUsedPrev = nullptr;*/
+		
 		UsedNode* Start = pDataHdr;
-		//UsedNode* End = pData + 1;
+		
 		FreeNode* pFree = new(Start) FreeNode(pDataHdr->mBlockSize);
 		InsertFree(pHeap->pFreeHead,pFree);
 		
 		FreeNode* toPass = pFree->pFreeNext;
 		
-		//pHeap->pFreeHead = pFree;
 		pHeap->pUsedHead = nullptr;
 		pHeap->pNextFit = pFree;
 		bool ifCoal = Coalescing(toPass);
@@ -195,24 +190,24 @@ void Mem::Free( void * const data )
 			pHeap->currFreeMem = (uint16_t)(pHeap->currFreeMem + DataSize);
 		}
 	}
-	else if (pDataHdr->pUsedNext != nullptr && pDataHdr->pUsedPrev == nullptr)//¦¹¬°²Ä¤@­Ó¥B«á­±¦³ªF¦è
+	else if (pDataHdr->pUsedNext != nullptr && pDataHdr->pUsedPrev == nullptr)//æ­¤ç‚ºç¬¬ä¸€å€‹ä¸”å¾Œé¢æœ‰æ±è¥¿
 	{
 		//Trace::out("if 4\n");
 	}
-	//InsertFree(pHeap->pFreeHead, pToFree);
+	
 	
 	AZUL_REPLACE_ME(data);	
 } 
  
 void Mem::InsertUsed(UsedNode * &WholeList, UsedNode* toAdd) 
 {
-	if (WholeList == nullptr)//¦¹¦C¨S¦³²Ä¤@­Óused node
+	if (WholeList == nullptr)
 	{
 		WholeList = toAdd;
 	}
-	else if (WholeList != nullptr)//¤w¸g¦³used node
+	else if (WholeList != nullptr)
 	{
-		//UsedNode* tmp = WholeList;
+		
 		WholeList->pUsedPrev = toAdd;
 		toAdd->pUsedNext = WholeList;
 		WholeList = toAdd;
@@ -223,7 +218,7 @@ void Mem::InsertFree(FreeNode* &WholeList, FreeNode* toAdd)
 {
 	FreeNode* tmp = WholeList;
 
-	if (WholeList != nullptr && WholeList->mType == Block::Used)//­Y¬O²Ä¤@­Ófree nodeÅÜused nodeªº¸Ü §âÀY²¾¨ì¤U¤@­Ófree
+	if (WholeList != nullptr && WholeList->mType == Block::Used)
 	{
 		toAdd->pFreePrev = nullptr;
 		if (tmp->pFreeNext != nullptr)
@@ -233,26 +228,26 @@ void Mem::InsertFree(FreeNode* &WholeList, FreeNode* toAdd)
 		}
 		WholeList = toAdd;
 
-	}else if (WholeList == nullptr)//¦¹¦C¨S¦³²Ä¤@­Ófree node
+	}else if (WholeList == nullptr)
 	{
 		WholeList = toAdd;
 	}
-	else if (WholeList != nullptr)//¤w¸g¦³free node
+	else if (WholeList != nullptr)
 	{
 		
 
 		while (true) 
 		{
 			
-			if (toAdd < tmp)//±ø¥ó²Å¦X ·Ç³Æ´¡¤J 
+			if (toAdd < tmp)
 			{
-				if (tmp->pFreePrev == nullptr)//­n´¡¤J²Ä¤@¦ì 
+				if (tmp->pFreePrev == nullptr) 
 				{
 					tmp->pFreePrev = toAdd;
 					toAdd->pFreeNext = tmp;
 					WholeList = toAdd;
 				}
-				else if (tmp->pFreePrev != nullptr && tmp->pFreeNext != nullptr)//­n´¡¤J¤¤¶¡ ¨â°¼³£¦³node 
+				else if (tmp->pFreePrev != nullptr && tmp->pFreeNext != nullptr)
 				{
 					toAdd->pFreeNext = tmp;
 					toAdd->pFreePrev = tmp->pFreePrev;
@@ -262,7 +257,7 @@ void Mem::InsertFree(FreeNode* &WholeList, FreeNode* toAdd)
 				}
 				break;
 			}
-			if (tmp->pFreeNext == nullptr) //­n´¡¤J³Ì«á¤@­Ó
+			if (tmp->pFreeNext == nullptr) 
 			{
 				tmp->pFreeNext = toAdd;
 				toAdd->pFreePrev = tmp;
@@ -272,7 +267,7 @@ void Mem::InsertFree(FreeNode* &WholeList, FreeNode* toAdd)
 		}
 	}
 	if (toAdd->pFreeNext != nullptr) {
-		FreeNode* toAddEnd = (FreeNode*)((uint32_t)(toAdd + 1) + toAdd->mBlockSize);//toAdd end ´Nµ¥©ó¤U¤@­Óªºhdr
+		FreeNode* toAddEnd = (FreeNode*)((uint32_t)(toAdd + 1) + toAdd->mBlockSize);
 		toAddEnd->mAboveBlockFree = true;
 	}
 }
